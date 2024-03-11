@@ -43,7 +43,14 @@ public class ResultServer {
 
 	private static void launchWebServer(Path serverDir) {
 		System.out.println("Visit localhost:8080");
-		// TODO: launch web server
+		new Thread(() ->
+				SimpleFileServer
+						.createFileServer(
+								new InetSocketAddress(8080),
+								serverDir.toAbsolutePath(),
+								OutputLevel.INFO)
+						.start())
+				.start();
 	}
 
 	private static String pageTreeHtml(Page rootPage) {

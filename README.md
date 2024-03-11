@@ -4,14 +4,12 @@ A repository for my live-coding talk [Modern Java in Action](https://nipafx.dev/
 
 ## Next
 
-Simple server:
-* `ResultServer::launchWebServer`:
-	```java
-	System.out.println("Visit localhost:8080");
-	SimpleFileServer
-			.createFileServer(
-					new InetSocketAddress(8080),
-					serverDir.toAbsolutePath(),
-					OutputLevel.INFO)
-			.start();
-	```
+Launch from terminal:
+* close IDE
+* verify existence of `jar/org.jsoup...jar`
+* launch with:
+  ```java
+  java -p jars --enable-preview \
+	  src/main/java/dev/nipafx/demo/modern/GitHubCrawl.java \
+	  https://github.com/junit-pioneer/junit-pioneer/issues/624 10
+  ```
