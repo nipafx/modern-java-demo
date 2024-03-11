@@ -66,14 +66,34 @@ public class PageTreeFactory {
 	}
 
 	private String fetchPageAsString(URI url) throws IOException, InterruptedException {
-		// TODO: create and send HTTP request
+		var request = HttpRequest
+				.newBuilder(url)
+				.GET()
+				.build();
+		return client
+				.send(request, BodyHandlers.ofString())
+				.body();
 	}
 
 	private Set<Page> resolveLinks(Set<URI> links, int depth) throws InterruptedException {
 		if (depth < 0)
 			return Collections.emptySet();
 
-		// TODO: resolve links in StructuredTaskScope
+		try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+			var futurePages = new ArrayList<Subtask<Page>>();
+			for (URI link : links)
+				futurePages.add(scope.fork(() -> createPage(link, depth)));
+
+			scope.join();
+			scope.throwIfFailed();
+
+			return futurePages.stream()
+					.map(Subtask::get)
+					.collect(toSet());
+		} catch (ExecutionException ex) {
+			// this should not happen as `ErrorPage` instances should have been created for all errors
+			throw new IllegalStateException("Error cases should have been handled during page creation!", ex);
+		}
 	}
 
 }

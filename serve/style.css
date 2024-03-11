@@ -1,0 +1,49 @@
+body {
+    background-color: #262429;
+    color: white;
+    font-size: 24px;
+}
+
+.container {
+    width: 600px;
+    margin: 2em auto;
+}
+
+.page {
+    margin: 1em 0;
+    padding: 0.5em;
+    border: 1px solid #69ea7d;
+    border-radius: 0.25em;
+
+    display: grid;
+    grid-template-columns: 1fr auto;
+}
+
+.page .ref:before {
+    content: "⤴";
+}
+
+.page.level-1 {
+    margin-left: 1em;
+}
+
+.page.level-2 {
+    margin-left: 2em;
+}
+
+.page.level-3 {
+    margin-left: 3em;
+}
+
+.page.level-4 {
+    margin-left: 4em;
+}
+
+.page.level-5 {
+    margin-left: 5em;
+}
+
+a, a:visited {
+    color: white;
+    text-decoration: none;
+}

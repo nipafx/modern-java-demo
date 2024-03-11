@@ -4,51 +4,35 @@ A repository for my live-coding talk [Modern Java in Action](https://nipafx.dev/
 
 ## Next
 
-Records:
-* create `record PageWithLinks(Page page, Set<URI> links)`
-	* additional constructor without `links`
-
-Modules:
-* fix errors in `PageFactory`: `requires org.jsoup;`
-* fix errors in `PageTreeFactory`: `requires java.net.http;`
-
-HTTP client:
-* instantiate `HttpClient` in `GitHubCrawl`:
+This is where string templates used to come in.
+Since [they're out](https://bugs.openjdk.org/browse/JDK-8329948) in JDK 23, there's nothing to do here except boring string formatting and method calls:
+* change output in `GitHubCrawl::main` to:
 	```java
-	var client = HttpClient.newHttpClient();
+	System.out.printf("""
+
+			---
+
+			%s
+			%s
+
+
+			""", Statistician.evaluate(rootPage), Pretty.pageList(rootPage));
 	```
-* `PageTreeFactory::fetchPageAsString`:
+* parse to HTML in `ResultServer::serve`:
 	```java
-	var request = HttpRequest
-	  .newBuilder(url)
-	  .GET()
-	  .build();
-	return client
-	  .send(request, BodyHandlers.ofString())
-	  .body();
+	var html = Jsoup.parse("""...""");
 	```
-
-Structured Concurrency:
-* `PageTreeFactory::resolveLinks`:
+  and update call to `Files.writeString` on next line
+* add info in `ResultServer::pageHtml`:
 	```java
-	try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-	  var futurePages = new ArrayList<Subtask<Page>>();
-	  for (URI link : links)
-		  futurePages.add(scope.fork(() -> createPage(link, depth)));
-
-	  scope.join();
-	  scope.throwIfFailed();
-
-	  return futurePages.stream()
-			  .map(Subtask::get)
-			  .collect(toSet());
-	} catch (ExecutionException ex) {
-	  // this should not happen as `ErrorPage` instances should have been created for all errors
-	  throw new IllegalStateException("Error cases should have been handled during page creation!", ex);
-	}
+	return join(RAW."""
+			<div class="page level-%d">
+				<a href="%s">%s</a>
+				%s
+  			</div>
+			""".formatted(
+					level,
+					page.url().toString(),
+					Pretty.pageName(page),
+					reference ? "<span class=\"ref\"></span>" : "");
 	```
-
-Run:
-* add breakpoint for issue #740
-* run with arguments `https://github.com/junit-pioneer/junit-pioneer/issues/624 10`
-* create and show thread dump
