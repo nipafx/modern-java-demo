@@ -37,7 +37,16 @@ public class Statistician {
 	}
 
 	private void evaluatePage(Page page) {
-		// TODO
+		if (evaluatedPages.contains(page))
+			return;
+		evaluatedPages.add(page);
+
+		switch (page) {
+			case ErrorPage _ -> numberOfErrors++;
+			case ExternalPage _ -> numberOfExternalLinks++;
+			case GitHubIssuePage _ -> numberOfIssues++;
+			case GitHubPrPage _ -> numberOfPrs++;
+		}
 	}
 
 	private Stats result() {

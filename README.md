@@ -4,42 +4,51 @@ A repository for my live-coding talk [Modern Java in Action](https://nipafx.dev/
 
 ## Next
 
-Operations:
-* implement methods in `Pretty`:
+Records:
+* create `record PageWithLinks(Page page, Set<URI> links)`
+	* additional constructor without `links`
+
+Modules:
+* fix errors in `PageFactory`: `requires org.jsoup;`
+* fix errors in `PageTreeFactory`: `requires java.net.http;`
+
+HTTP client:
+* instantiate `HttpClient` in `GitHubCrawl`:
 	```java
-	public static String pageList(Page rootPage) {
-		if (!(rootPage instanceof GitHubPage ghPage))
-			return pageName(rootPage);
-
-		return ghPage
-				.subtree()
-				.map(Pretty::pageName)
-				.collect(joining("\n"));
-	}
-
-	public static String pageName(Page page) {
-		return switch (page) {
-			case ErrorPage(URI url, _) -> "💥 ERROR: " + url.getHost();
-			case ExternalPage(URI url, _) -> "💤 EXTERNAL: " + url.getHost();
-			case GitHubIssuePage(_, _, _, int nr) -> "🐈 ISSUE #" + nr;
-			case GitHubPrPage(_, _, _, int nr) -> "🐙 PR #" + nr;
-		};
-	}
+	var client = HttpClient.newHttpClient();
 	```
-* implement `Statistician::evaluatePage`:
+* `PageTreeFactory::fetchPageAsString`:
 	```java
-	private void evaluatePage(Page page) {
-		if (evaluatedPages.contains(page))
-			return;
-		evaluatedPages.add(page);
-
-		switch (page) {
-			case ErrorPage _ -> numberOfErrors++;
-			case ExternalPage _ -> numberOfExternalLinks++;
-			case GitHubIssuePage _ -> numberOfIssues++;
-			case GitHubPrPage _ -> numberOfPrs++;
-		}
-	}
+	var request = HttpRequest
+	  .newBuilder(url)
+	  .GET()
+	  .build();
+	return client
+	  .send(request, BodyHandlers.ofString())
+	  .body();
 	```
 
-Run `GitHubCrawl`.
+Structured Concurrency:
+* `PageTreeFactory::resolveLinks`:
+	```java
+	try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+	  var futurePages = new ArrayList<Subtask<Page>>();
+	  for (URI link : links)
+		  futurePages.add(scope.fork(() -> createPage(link, depth)));
+
+	  scope.join();
+	  scope.throwIfFailed();
+
+	  return futurePages.stream()
+			  .map(Subtask::get)
+			  .collect(toSet());
+	} catch (ExecutionException ex) {
+	  // this should not happen as `ErrorPage` instances should have been created for all errors
+	  throw new IllegalStateException("Error cases should have been handled during page creation!", ex);
+	}
+	```
+
+Run:
+* add breakpoint for issue #740
+* run with arguments `https://github.com/junit-pioneer/junit-pioneer/issues/624 10`
+* create and show thread dump

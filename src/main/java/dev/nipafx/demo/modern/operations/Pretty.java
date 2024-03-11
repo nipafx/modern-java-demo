@@ -18,13 +18,22 @@ public class Pretty {
 	}
 
 	public static String pageList(Page rootPage) {
-		// TODO
-		return "";
+		if (!(rootPage instanceof GitHubPage ghPage))
+			return pageName(rootPage);
+
+		return ghPage
+				.subtree()
+				.map(Pretty::pageName)
+				.collect(joining("\n"));
 	}
 
 	public static String pageName(Page page) {
-		// TODO
-		return "";
+		return switch (page) {
+			case ErrorPage(URI url, _) -> "💥 ERROR: " + url.getHost();
+			case ExternalPage(URI url, _) -> "💤 EXTERNAL: " + url.getHost();
+			case GitHubIssuePage(_, _, _, int nr) -> "🐈 ISSUE #" + nr;
+			case GitHubPrPage(_, _, _, int nr) -> "🐙 PR #" + nr;
+		};
 	}
 
 }
