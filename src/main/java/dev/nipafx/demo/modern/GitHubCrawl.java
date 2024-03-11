@@ -26,9 +26,16 @@ public class GitHubCrawl {
 		var factory = new PageTreeFactory(client);
 		var rootPage = factory.createPage(config.seedUrl(), config.depth());
 
-		// TODO: improve formatting
-		System.out.println(Statistician.evaluate(rootPage));
-		System.out.println(Pretty.pageList(rootPage));
+		System.out.printf("""
+				
+				---
+				
+				%s
+				
+				%s
+				
+				
+				""", Statistician.evaluate(rootPage), Pretty.pageList(rootPage));
 
 		ResultServer.serve(rootPage, Path.of("serve"));
 	}

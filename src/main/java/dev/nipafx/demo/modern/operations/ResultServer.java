@@ -1,9 +1,13 @@
 package dev.nipafx.demo.modern.operations;
 
+import com.sun.net.httpserver.SimpleFileServer;
+import com.sun.net.httpserver.SimpleFileServer.OutputLevel;
 import dev.nipafx.demo.modern.page.GitHubPage;
 import dev.nipafx.demo.modern.page.Page;
+import org.jsoup.Jsoup;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -17,8 +21,7 @@ public class ResultServer {
 		if (!Files.exists(serverDir))
 			Files.createDirectory(serverDir);
 
-		// TODO: parse to HTML document
-		var html = """
+		var html = Jsoup.parse("""
 				<!DOCTYPE html>
 				<html lang="en">
 					<head>
@@ -32,8 +35,15 @@ public class ResultServer {
 						</div>
 					</body>
 				</html>
-				""".formatted(Pretty.pageName(rootPage), pageTreeHtml(rootPage));
-		Files.writeString(serverDir.resolve("index.html"), html);
+				""".formatted(Pretty.pageName(rootPage), pageTreeHtml(rootPage)));
+		Files.writeString(serverDir.resolve("index.html"), html.html());
+
+		launchWebServer(serverDir);
+	}
+
+	private static void launchWebServer(Path serverDir) {
+		System.out.println("Visit localhost:8080");
+		// TODO: launch web server
 	}
 
 	private static String pageTreeHtml(Page rootPage) {
@@ -62,12 +72,16 @@ public class ResultServer {
 	}
 
 	private static String pageHtml(Page page, boolean reference, int level) {
-		// TODO: add page info
 		return """
-				<div class="page level-0">
-					<a href=""></a>
+				<div class="page level-%d">
+					<a href="%s">%s</a>
+					%s
 				</div>
-				""";
+				""".formatted(
+						level,
+						page.url().toString(),
+						Pretty.pageName(page),
+						reference ? "<span class=\"ref\"></span>" : "");
 	}
 
 }
