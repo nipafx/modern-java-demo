@@ -4,24 +4,42 @@ A repository for my live-coding talk [Modern Java in Action](https://nipafx.dev/
 
 ## Next
 
-Sealed types:
-* `sealed interface Page permits ErrorPage, SuccessfulPage` with `URI url()`
-* `sealed interface SuccessfulPage extends Page permits ExternalPage, GitHubPage` with `String content()`
-* `sealed interface GitHubPage extends SuccessfulPage permits GitHubIssuePage, GitHubPrPage` with `Set<Page> links()` and
+Operations:
+* implement methods in `Pretty`:
 	```java
-	default Stream<Page> subtree() {
-		var subtree = new ArrayList<Page>(Set.of(this));
-		var upcomingPages = new LinkedHashSet<>(this.links());
+	public static String pageList(Page rootPage) {
+		if (!(rootPage instanceof GitHubPage ghPage))
+			return pageName(rootPage);
 
-		while (!upcomingPages.isEmpty()) {
-			var nextPage = upcomingPages.removeFirst();
-			if (!subtree.contains(nextPage) && nextPage instanceof GitHubPage nextGhPage)
-				new LinkedHashSet<>(nextGhPage.links())
-						.reversed()
-						.forEach(upcomingPages::addFirst);
-			subtree.add(nextPage);
-		}
+		return ghPage
+				.subtree()
+				.map(Pretty::pageName)
+				.collect(joining("\n"));
+	}
 
-		return subtree.stream();
+	public static String pageName(Page page) {
+		return switch (page) {
+			case ErrorPage(URI url, _) -> "💥 ERROR: " + url.getHost();
+			case ExternalPage(URI url, _) -> "💤 EXTERNAL: " + url.getHost();
+			case GitHubIssuePage(_, _, _, int nr) -> "🐈 ISSUE #" + nr;
+			case GitHubPrPage(_, _, _, int nr) -> "🐙 PR #" + nr;
+		};
 	}
 	```
+* implement `Statistician::evaluatePage`:
+	```java
+	private void evaluatePage(Page page) {
+		if (evaluatedPages.contains(page))
+			return;
+		evaluatedPages.add(page);
+
+		switch (page) {
+			case ErrorPage _ -> numberOfErrors++;
+			case ExternalPage _ -> numberOfExternalLinks++;
+			case GitHubIssuePage _ -> numberOfIssues++;
+			case GitHubPrPage _ -> numberOfPrs++;
+		}
+	}
+	```
+
+Run `GitHubCrawl`.

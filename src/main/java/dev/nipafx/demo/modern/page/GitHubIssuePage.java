@@ -7,7 +7,7 @@ import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
-public record GitHubIssuePage(URI url, String content, Set<URI> links, int issueNumber) {
+public record GitHubIssuePage(URI url, String content, Set<Page> links, int issueNumber) implements GitHubPage {
 
 	public GitHubIssuePage {
 		requireNonNull(url);

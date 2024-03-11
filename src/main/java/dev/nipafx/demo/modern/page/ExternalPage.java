@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
-public record ExternalPage(URI url, String content) {
+public record ExternalPage(URI url, String content) implements SuccessfulPage {
 
 	public ExternalPage {
 		requireNonNull(url);
